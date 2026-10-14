@@ -189,9 +189,17 @@
         <p class="panel-help">Con tu DNI y el municipio donde renovás, reviso qué multas te van a pedir resolver.</p>
         <label class="field"><span>DNI</span><input id="dni" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="Ej: 30123456"></label>
         <label class="field"><span>Municipio donde renovás</span><input id="muni" autocomplete="off" maxlength="60" placeholder="Ej: Lomas de Zamora"></label>
+        <div id="uploadBlockR" hidden>
+          <label class="drop" for="fileR"><svg viewBox="0 0 24 24"><path d="M12 16V3M7 8l5-5 5 5M4 15v5h16v-5"/></svg> Adjuntar informe del CENAT (opcional, hasta 5 archivos)</label>
+          <input type="file" id="fileR" accept=".pdf,image/*" multiple hidden>
+          <ul class="filelist" id="listR" aria-live="polite"></ul>
+        </div>
+        <label class="consent" id="consentRowR" hidden><input type="checkbox" id="consentR"> <span>Acepto que el archivo que adjunto se envíe a la profesional para evaluar mi consulta. <a href="legal.html#privacidad" target="_blank" rel="noopener">Política de privacidad</a></span></label>
         <div class="field-error" id="errRenovar" role="alert"></div>
-        <button type="submit" class="upload-cta wa-cta">Continuar por WhatsApp</button>
-        <p class="panel-note">Estos datos no se guardan en la web: van solo en el mensaje de WhatsApp que vos decidís enviar.</p>
+        <button type="submit" class="upload-cta wa-cta" id="btnR">Continuar por WhatsApp</button>
+        <a class="upload-cta wa-cta" id="waLinkR" target="_blank" rel="noopener" hidden>Abrir WhatsApp →</a>
+        <div class="file-name" id="statusR" role="status"></div>
+        <p class="panel-note">El DNI y el municipio no se guardan en la web: van solo en el mensaje de WhatsApp que vos decidís enviar. Si adjuntás el informe, ese archivo se guarda en la carpeta privada de la profesional.</p>
       </form>
 
       <form class="panel" id="panelVender" hidden novalidate>
@@ -203,9 +211,18 @@
           <label class="chip"><input type="radio" name="motivo" value="baja"><span>Dar de baja (robo, siniestro)</span></label>
         </fieldset>
         <label class="field"><span>Dominio (patente)</span><input id="dominio" autocomplete="off" autocapitalize="characters" maxlength="9" placeholder="Ej: AB123CD"></label>
+        <p class="panel-tip" id="tipVender">¿Ya sacaste el informe SUATS del vehículo? Adjuntalo acá abajo y llega junto con tu consulta.</p>
+        <div id="uploadBlockV" hidden>
+          <label class="drop" for="fileV"><svg viewBox="0 0 24 24"><path d="M12 16V3M7 8l5-5 5 5M4 15v5h16v-5"/></svg> Adjuntar informe SUATS (opcional, hasta 5 archivos)</label>
+          <input type="file" id="fileV" accept=".pdf,image/*" multiple hidden>
+          <ul class="filelist" id="listV" aria-live="polite"></ul>
+        </div>
+        <label class="consent" id="consentRowV" hidden><input type="checkbox" id="consentV"> <span>Acepto que el archivo que adjunto se envíe a la profesional para evaluar mi consulta. <a href="legal.html#privacidad" target="_blank" rel="noopener">Política de privacidad</a></span></label>
         <div class="field-error" id="errVender" role="alert"></div>
-        <button type="submit" class="upload-cta wa-cta">Continuar por WhatsApp</button>
-        <p class="panel-tip">Si ya sacaste el informe SUATS del vehículo, mandalo por WhatsApp junto con este mensaje.</p>
+        <button type="submit" class="upload-cta wa-cta" id="btnV">Continuar por WhatsApp</button>
+        <a class="upload-cta wa-cta" id="waLinkV" target="_blank" rel="noopener" hidden>Abrir WhatsApp →</a>
+        <div class="file-name" id="statusV" role="status"></div>
+        <p class="panel-note">El dominio no se guarda en la web: va solo en el mensaje de WhatsApp. Si adjuntás el informe, ese archivo se guarda en la carpeta privada de la profesional.</p>
       </form>
 
       <form class="panel" id="panelOtras" hidden novalidate>
@@ -226,7 +243,7 @@
         <div class="file-name" id="sendStatus" role="status"></div>
       </form>
 
-      <p class="modal-disclaimer">Al continuar, no se genera automáticamente un descargo ni se inicia una representación legal. Los datos que escribas (DNI, municipio, dominio) no se guardan en la web: van solo en el mensaje de WhatsApp que vos decidís enviar. Si subís archivos, enviá únicamente actas de infracciones. El envío de una consulta no garantiza la impugnación ni la anulación de una multa.</p>
+      <p class="modal-disclaimer">Al continuar, no se genera automáticamente un descargo ni se inicia una representación legal. Los datos que escribas (DNI, municipio, dominio) no se guardan en la web: van solo en el mensaje de WhatsApp que vos decidís enviar. Si subís archivos, enviá únicamente actas o informes de infracciones (CENAT, SUATS). El envío de una consulta no garantiza la impugnación ni la anulación de una multa.</p>
     </div>
   </div>
 
@@ -276,31 +293,7 @@
         document.body.appendChild(a); a.click(); a.remove();
       };
 
-      // Camino 1: renovar licencia. Los datos viajan solo en el mensaje de WhatsApp.
-      $('panelRenovar').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const dni = $('dni').value.replace(/[.\s]/g, '');
-        const muni = $('muni').value.trim().replace(/\s+/g, ' ');
-        if (!/^\d{7,8}$/.test(dni)) return err('errRenovar', 'Revisá el DNI: tienen que ser 7 u 8 números.');
-        if (muni.length < 3) return err('errRenovar', 'Escribí el municipio donde renovás.');
-        err('errRenovar');
-        openWa('Hola, Victoria. Voy a renovar mi licencia de conducir y quiero saber qué multas me van a pedir resolver.\nDNI: ' + dni + '\nMunicipio donde renuevo: ' + muni);
-      });
-
-      // Camino 2: vender o dar de baja. Dominio argentino: ABC123, AB123CD, 123ABC, A123BCD.
-      const PLATE = /^([A-Z]{3}\d{3}|[A-Z]{2}\d{3}[A-Z]{2}|\d{3}[A-Z]{3}|[A-Z]\d{3}[A-Z]{3})$/;
-      $('panelVender').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const dom = $('dominio').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        if (!PLATE.test(dom)) return err('errVender', 'Revisá el dominio. Ejemplos: AB123CD o ABC123.');
-        err('errVender');
-        const baja = document.querySelector('input[name="motivo"]:checked').value === 'baja';
-        openWa(baja
-          ? 'Hola, Victoria. Necesito dar de baja mi vehículo y me piden libre deuda de infracciones. Quiero revisar qué infracciones tiene asociadas.\nDominio: ' + dom
-          : 'Hola, Victoria. Quiero vender mi vehículo y necesito saber qué infracciones tiene asociadas.\nDominio: ' + dom);
-      });
-
-      // Camino 3: actas o dudas. Si hay UPLOAD_URL, hasta 5 archivos van a Drive.
+      // Subida opcional de archivos (informe CENAT, informe SUATS o actas). Sin UPLOAD_URL el bloque queda oculto.
       const newCode = () => 'MC-' + Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 32]).join('');
       const toBase64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
       async function prepare(f) {
@@ -315,77 +308,118 @@
         return { blob, type: 'image/jpeg', name: f.name.replace(/\.[^.]+$/, '') + '.jpg' };
       }
 
-      const fileInput = $('actaFile');
-      const fileList = $('fileList');
-      const consentRow = $('consentRow');
-      const consent = $('consent');
-      const sendStatus = $('sendStatus');
-      const waLink = $('waLink');
-      const otrasBtn = $('otrasBtn');
-      let picked = [];
-      $('uploadBlock').hidden = !UPLOAD_URL;
+      function bindForm(o) {
+        const input = $(o.input), list = $(o.list), consentRow = $(o.consentRow), consent = $(o.consent);
+        const status = $(o.status), waLink = $(o.waLink), btn = $(o.btn);
+        let picked = [];
+        $(o.block).hidden = !UPLOAD_URL;
 
-      function resetWa() { waLink.hidden = true; otrasBtn.hidden = false; otrasBtn.disabled = false; sendStatus.textContent = ''; }
-      function renderFiles() {
-        fileList.textContent = '';
-        picked.forEach((f, i) => {
-          const li = document.createElement('li');
-          const s = document.createElement('span'); s.textContent = f.name;
-          const b = document.createElement('button'); b.type = 'button'; b.textContent = '×'; b.setAttribute('aria-label', 'Quitar ' + f.name);
-          b.addEventListener('click', () => { picked.splice(i, 1); renderFiles(); });
-          li.append(s, b); fileList.append(li);
+        function reset() { waLink.hidden = true; btn.hidden = false; btn.disabled = false; status.textContent = ''; }
+        function render() {
+          list.textContent = '';
+          picked.forEach((f, i) => {
+            const li = document.createElement('li');
+            const s = document.createElement('span'); s.textContent = f.name;
+            const b = document.createElement('button'); b.type = 'button'; b.textContent = '×'; b.setAttribute('aria-label', 'Quitar ' + f.name);
+            b.addEventListener('click', () => { picked.splice(i, 1); render(); });
+            li.append(s, b); list.append(li);
+          });
+          consentRow.hidden = picked.length === 0;
+          reset();
+        }
+        input.addEventListener('change', () => {
+          const incoming = Array.from(input.files);
+          const room = Math.max(MAX_FILES - picked.length, 0);
+          incoming.slice(0, room).forEach((f) => { if (!picked.some((p) => p.name === f.name && p.size === f.size)) picked.push(f); });
+          input.value = '';
+          render();
+          err(o.err, incoming.length > room ? 'Podés subir hasta ' + MAX_FILES + ' archivos. El resto podés mandarlo por WhatsApp.' : '');
         });
-        consentRow.hidden = picked.length === 0;
-        resetWa();
+        consent.addEventListener('change', () => err(o.err));
+
+        $(o.form).addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (o.trap && $(o.trap).value) return;
+          const m = o.build();
+          if (!m) return;
+          const withFiles = Boolean(UPLOAD_URL) && picked.length > 0;
+          if (withFiles && !consent.checked) return err(o.err, 'Para enviar los archivos, aceptá el consentimiento.');
+          err(o.err);
+          if (!withFiles) { openWa(m.plain); return; }
+          const code = newCode();
+          let sent = false;
+          btn.disabled = true;
+          status.textContent = 'Enviando…';
+          try {
+            const files = [];
+            let total = 0;
+            for (const f of picked) {
+              const p = await prepare(f);
+              total += p.blob.size;
+              if (total > MAX_TOTAL) throw new Error('total');
+              files.push({ name: p.name, type: p.type, data: await toBase64(p.blob) });
+            }
+            await fetch(UPLOAD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ code, note: m.note || '', files }) });
+            sent = true;
+            status.textContent = (files.length === 1 ? 'Archivo enviado' : files.length + ' archivos enviados') + '. Código de consulta: ' + code;
+          } catch (er) {
+            status.textContent = er.message === 'size' ? 'Un PDF supera los 5 MB. Podés enviarlo por WhatsApp.'
+              : er.message === 'total' ? 'Los archivos pesan demasiado. Podés enviarlos por WhatsApp.'
+              : 'No se pudo enviar. Continuá por WhatsApp y enviá los archivos ahí.';
+          }
+          waLink.href = WA + '?text=' + encodeURIComponent(sent ? m.sent(code, picked.length) : m.failed);
+          btn.hidden = true; waLink.hidden = false;
+        });
       }
-      fileInput.addEventListener('change', () => {
-        const incoming = Array.from(fileInput.files);
-        const room = Math.max(MAX_FILES - picked.length, 0);
-        incoming.slice(0, room).forEach((f) => { if (!picked.some((p) => p.name === f.name && p.size === f.size)) picked.push(f); });
-        fileInput.value = '';
-        renderFiles();
-        err('errOtras', incoming.length > room ? 'Podés subir hasta ' + MAX_FILES + ' archivos. El resto podés mandarlo por WhatsApp.' : '');
+
+      const sentTxt = (c, n) => '\nTe envié ' + (n === 1 ? 'el archivo' : n + ' archivos') + ' por la web (código ' + c + ').';
+      const failTxt = '\nNo pude subir el archivo por la web: te lo mando por acá.';
+
+      // Camino 1: renovar licencia. DNI y municipio viajan solo en el mensaje de WhatsApp.
+      bindForm({
+        form: 'panelRenovar', block: 'uploadBlockR', input: 'fileR', list: 'listR', consentRow: 'consentRowR', consent: 'consentR',
+        status: 'statusR', waLink: 'waLinkR', btn: 'btnR', err: 'errRenovar',
+        build: () => {
+          const dni = $('dni').value.replace(/[.\s]/g, '');
+          const muni = $('muni').value.trim().replace(/\s+/g, ' ');
+          if (!/^\d{7,8}$/.test(dni)) return err('errRenovar', 'Revisá el DNI: tienen que ser 7 u 8 números.');
+          if (muni.length < 3) return err('errRenovar', 'Escribí el municipio donde renovás.');
+          const plain = 'Hola, Victoria. Voy a renovar mi licencia de conducir y quiero saber qué multas me van a pedir resolver.\nDNI: ' + dni + '\nMunicipio donde renuevo: ' + muni;
+          return { plain, note: 'Renovar licencia (informe CENAT)', sent: (c, n) => plain + sentTxt(c, n), failed: plain + failTxt };
+        }
       });
 
-      consent.addEventListener('change', () => err('errOtras'));
-      $('panelOtras').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if ($('website').value) return;
-        const note = $('nota').value.trim().replace(/\s+/g, ' ').slice(0, 400);
-        const tail = note ? '\nMi consulta: ' + note : '';
-        const withFiles = Boolean(UPLOAD_URL) && picked.length > 0;
-        if (withFiles && !consent.checked) return err('errOtras', 'Para enviar los archivos, aceptá el consentimiento.');
-        err('errOtras');
-        if (!withFiles) {
-          openWa('Hola, Victoria. Quiero consultar por mis multas.' + (note ? tail : ' No sé por dónde empezar.'));
-          return;
+      // Camino 2: vender o dar de baja. Dominio argentino: ABC123, AB123CD, 123ABC, A123BCD.
+      const PLATE = /^([A-Z]{3}\d{3}|[A-Z]{2}\d{3}[A-Z]{2}|\d{3}[A-Z]{3}|[A-Z]\d{3}[A-Z]{3})$/;
+      if (!UPLOAD_URL) $('tipVender').textContent = 'Si ya sacaste el informe SUATS del vehículo, mandalo por WhatsApp junto con este mensaje.';
+      bindForm({
+        form: 'panelVender', block: 'uploadBlockV', input: 'fileV', list: 'listV', consentRow: 'consentRowV', consent: 'consentV',
+        status: 'statusV', waLink: 'waLinkV', btn: 'btnV', err: 'errVender',
+        build: () => {
+          const dom = $('dominio').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          if (!PLATE.test(dom)) return err('errVender', 'Revisá el dominio. Ejemplos: AB123CD o ABC123.');
+          const baja = document.querySelector('input[name="motivo"]:checked').value === 'baja';
+          const plain = baja
+            ? 'Hola, Victoria. Necesito dar de baja mi vehículo y me piden libre deuda de infracciones. Quiero revisar qué infracciones tiene asociadas.\nDominio: ' + dom
+            : 'Hola, Victoria. Quiero vender mi vehículo y necesito saber qué infracciones tiene asociadas.\nDominio: ' + dom;
+          return { plain, note: (baja ? 'Dar de baja' : 'Vender') + ' (informe SUATS)', sent: (c, n) => plain + sentTxt(c, n), failed: plain + failTxt };
         }
-        const code = newCode();
-        let sent = false;
-        otrasBtn.disabled = true;
-        sendStatus.textContent = 'Enviando…';
-        try {
-          const files = [];
-          let total = 0;
-          for (const f of picked) {
-            const p = await prepare(f);
-            total += p.blob.size;
-            if (total > MAX_TOTAL) throw new Error('total');
-            files.push({ name: p.name, type: p.type, data: await toBase64(p.blob) });
-          }
-          await fetch(UPLOAD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ code, note, files }) });
-          sent = true;
-          sendStatus.textContent = (files.length === 1 ? 'Archivo enviado' : files.length + ' archivos enviados') + '. Código de consulta: ' + code;
-        } catch (er) {
-          sendStatus.textContent = er.message === 'size' ? 'Un PDF supera los 5 MB. Podés enviarlo por WhatsApp.'
-            : er.message === 'total' ? 'Los archivos pesan demasiado. Podés enviarlos por WhatsApp.'
-            : 'No se pudo enviar. Continuá por WhatsApp y enviá los archivos ahí.';
+      });
+
+      // Camino 3: actas o dudas.
+      bindForm({
+        form: 'panelOtras', block: 'uploadBlock', input: 'actaFile', list: 'fileList', consentRow: 'consentRow', consent: 'consent',
+        status: 'sendStatus', waLink: 'waLink', btn: 'otrasBtn', err: 'errOtras', trap: 'website',
+        build: () => {
+          const note = $('nota').value.trim().replace(/\s+/g, ' ').slice(0, 400);
+          const tail = note ? '\nMi consulta: ' + note : '';
+          return {
+            plain: 'Hola, Victoria. Quiero consultar por mis multas.' + (note ? tail : ' No sé por dónde empezar.'),
+            note,
+            sent: (c, n) => 'Hola, Victoria. Te envié ' + (n === 1 ? 'el acta' : n + ' archivos') + ' de mi multa por la web (código ' + c + ').' + tail,
+            failed: 'Hola, Victoria. Quiero consultar por mis multas.' + (note ? tail : ' ¿Cómo puedo enviarte las actas?')
+          };
         }
-        const msg = sent
-          ? 'Hola, Victoria. Te envié ' + (picked.length === 1 ? 'el acta' : picked.length + ' archivos') + ' de mi multa por la web (código ' + code + ').' + tail
-          : 'Hola, Victoria. Quiero consultar por mis multas.' + (note ? tail : ' ¿Cómo puedo enviarte las actas?');
-        waLink.href = WA + '?text=' + encodeURIComponent(msg);
-        otrasBtn.hidden = true; waLink.hidden = false;
       });
 
       menuToggle.addEventListener('click', () => {
