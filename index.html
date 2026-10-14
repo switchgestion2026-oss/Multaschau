@@ -266,7 +266,10 @@
       modal.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', () => show('choose')));
 
       const err = (id, msg) => { $(id).textContent = msg || ''; };
+      let waLock = false;
       const openWa = (msg) => {
+        if (waLock) return;
+        waLock = true; setTimeout(() => { waLock = false; }, 3000);
         const a = document.createElement('a');
         a.href = WA + '?text=' + encodeURIComponent(msg);
         a.target = '_blank'; a.rel = 'noopener';
